@@ -1,5 +1,3 @@
-Here's a comprehensive `README.md` for your 2FA authentication system:
-
 ```markdown
 # Two-Factor Authentication (2FA) API with JWT
 
