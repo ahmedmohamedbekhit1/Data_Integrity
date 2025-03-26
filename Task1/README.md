@@ -1,24 +1,17 @@
+# Two-Factor Authentication (2FA) API Documentation
 
-# Two-Factor Authentication (2FA) API with JWT
+## Overview
+This API implements a secure authentication flow with:
+1. User registration
+2. Two-step login (credentials + 2FA code)
+3. JWT-protected endpoints
 
-A secure RESTful API implementing Google Authenticator-style 2FA with JWT token authentication.
-
-## Features
-
-- User registration with password hashing
-- Two-step login process:
-  1. Username/password verification
-  2. 2FA code validation
-- JWT token generation for authenticated sessions
-- Protected endpoints requiring valid JWT
-- QR code generation for Google Authenticator setup
-
-## API Endpoints
+## Endpoints
 
 ### 1. User Registration
 **POST** `/signup.php`
 
-Request:
+#### Request:
 ```json
 {
     "username": "ahmedbekhit",
@@ -26,7 +19,7 @@ Request:
 }
 ```
 
-Response:
+#### Response:
 ```json
 {
     "success": true,
@@ -34,10 +27,10 @@ Response:
 }
 ```
 
-### 2. Login (Step 1 - Credentials)
-**POST** `/login.php`
+### 2. Login Flow
 
-Request:
+#### First Step - Credentials Verification
+**POST** `/login.php`
 ```json
 {
     "username": "ahmedbekhit",
@@ -45,7 +38,8 @@ Request:
 }
 ```
 
-Response (if 2FA not set up):
+##### Possible Responses:
+1. If 2FA not set up:
 ```json
 {
     "success": true,
@@ -55,7 +49,7 @@ Response (if 2FA not set up):
 }
 ```
 
-Response (if 2FA already set up):
+2. If 2FA already set up:
 ```json
 {
     "success": true,
@@ -64,10 +58,8 @@ Response (if 2FA already set up):
 }
 ```
 
-### 3. Login (Step 2 - 2FA Verification)
+#### Second Step - 2FA Verification
 **POST** `/login.php`
-
-Request:
 ```json
 {
     "username": "ahmedbekhit",
@@ -76,7 +68,7 @@ Request:
 }
 ```
 
-Response:
+##### Successful Response:
 ```json
 {
     "success": true,
@@ -85,79 +77,60 @@ Response:
 }
 ```
 
-### 4. Protected Endpoints (Example: Products)
+### 3. Protected Endpoints (Example: Products)
 **GET** `/products.php`
-- Requires: `Authorization: Bearer <token>`
+```
+Authorization: Bearer <your_jwt_token>
+```
 
-## Setup Instructions
+## Postman Testing Guide
 
-1. **Database Setup**:
-   ```sql
-  -- Users Table
-CREATE TABLE IF NOT EXISTS Users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(256) NOT NULL,
-    twofa_secret VARCHAR(256),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+### Test 1: Registration
+1. Create new POST request to `/signup.php`
+2. Set body to raw JSON
+3. Enter username and password
+4. Send request - should get success message
 
--- Products Table
-CREATE TABLE IF NOT EXISTS Products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description VARCHAR(255),
-    price DECIMAL(10,2) NOT NULL,
-    quantity INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-   ```
+### Test 2: First Login (2FA Setup)
+1. Create POST request to `/login.php`
+2. Use same credentials
+3. First response will contain QR code for 2FA setup
 
-2. **Dependencies**:
-   - PHP 7.4+
-   - MySQL/MariaDB
-   - Required files in `RobThree/` directory
+### Test 3: Verify 2FA Code
+1. Scan QR code with Google Authenticator
+2. Add the code to your login request:
+```json
+{
+    "username": "ahmedbekhit",
+    "password": "securepassword123",
+    "twofa_code": "123456"
+}
+```
+3. You'll receive JWT token on success
 
-3. **Installation**:
-   - Place all PHP files in your web server directory
-   - Configure database connection in `db_connection.php`
-
-## Authentication Flow
-
-1. User registers via `/signup.php`
-2. On first login:
-   - System generates and stores 2FA secret
-   - Returns QR code for Google Authenticator setup
-3. Subsequent logins require:
-   - Valid username/password
-   - Current 2FA code from authenticator app
-4. Successful login returns JWT token
-5. Token is used for accessing protected endpoints
+### Test 4: Access Protected Endpoint
+1. Create GET request to `/products.php`
+2. Add Authorization header:
+```
+Authorization: Bearer <your_token>
+```
+3. Should receive product data
 
 ## Error Responses
 
-| Status Code | Description                 |
-|-------------|-----------------------------|
-| 400         | Missing required fields     |
-| 401         | Invalid credentials/code    |
-| 409         | Username already exists     |
-| 500         | Server/database error       |
+| Status Code | Error Message | Description |
+|-------------|---------------|-------------|
+| 400 | Username and password are required | Missing credentials |
+| 401 | Invalid credentials | Wrong username/password |
+| 401 | Invalid 2FA code | Wrong verification code |
+| 409 | Username already exists | Duplicate registration |
+| 500 | Database error | Server-side issue |
 
-## Security Features
+## Flow Diagram
+1. Register → Login → (Setup 2FA if first time) → Verify 2FA → Get Token → Access Protected Endpoints
 
-- Password hashing with bcrypt
-- Time-based one-time passwords (TOTP)
-- JWT with expiration
-- Prepared SQL statements
-- HTTPS recommended for production
-
-## Testing with Postman
-
-1. Import the included Postman collection
-2. Test endpoints in this order:
-   - Registration
-   - First login (get QR code)
-   - Second login (with 2FA code)
-   - Access protected endpoints
-
-```
+## Security Notes
+- Always use HTTPS
+- Store passwords hashed (bcrypt)
+- JWT tokens expire after 1 hour
+- 2FA codes are time-based (30s validity)
