@@ -93,8 +93,24 @@ Response:
 
 1. **Database Setup**:
    ```sql
-   ALTER TABLE Users ADD COLUMN twofa_secret VARCHAR(255);
-   ALTER TABLE Users ADD COLUMN twofa_enabled BOOLEAN DEFAULT TRUE;
+  -- Users Table
+CREATE TABLE IF NOT EXISTS Users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(256) NOT NULL,
+    twofa_secret VARCHAR(256),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Products Table
+CREATE TABLE IF NOT EXISTS Products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    price DECIMAL(10,2) NOT NULL,
+    quantity INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
    ```
 
 2. **Dependencies**:
