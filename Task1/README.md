@@ -1,4 +1,4 @@
-```markdown
+
 # Two-Factor Authentication (2FA) API with JWT
 
 A secure RESTful API implementing Google Authenticator-style 2FA with JWT token authentication.
